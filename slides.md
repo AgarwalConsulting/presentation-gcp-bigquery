@@ -12,32 +12,32 @@ Gaurav Agarwal
 
 ---
 
-# Agenda
+## Agenda
+
+- Overview
+
+- Interacting with BQ
+
+- Running & Managing Jobs
+
+- Working with datasets
+
+- Overview of BigQuery Data Transfer Service
+
+- BigQuery Tables
+
+  - Schemas
+
+  - Tables / Views
+
+- Workload Management
+
+- Monitoring & Logging
 
 ---
-
 class: center, middle
 
-![Me](assets/images/me.png)
-
-Software Engineer & Product Developer
-
-Director of Engineering & Founder @ https://codermana.com
-
-ex-Tarka Labs, ex-BrowserStack, ex-ThoughtWorks
-
----
-class: center, middle
-
-```golang
-package main
-
-import "fmt"
-
-func main() {
-  fmt.Println("Hello, world!")
-}
-```
+## Overview of BigQuery
 
 ---
 
