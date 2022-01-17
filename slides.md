@@ -6,7 +6,7 @@ layout: true
 
 class: center, middle
 
-# {title}
+# GCP BigQuery
 
 Gaurav Agarwal
 
@@ -44,7 +44,7 @@ func main() {
 class: center, middle
 
 Code
-https://github.com/algogrit/presentation-template
+https://github.com/algogrit/presentation-gcp-bigquery
 
 Slides
-https://template.slides.algogrit.com
+https://gcp-bigquery.slides.algogrit.com
