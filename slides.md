@@ -44,7 +44,7 @@ func main() {
 class: center, middle
 
 Code
-https://github.com/algogrit/presentation-gcp-bigquery
+https://github.com/AgarwalConsulting/presentation-gcp-bigquery
 
 Slides
-https://gcp-bigquery.slides.algogrit.com
+https://gcp-bigquery.slides.agarwalconsulting.io/
