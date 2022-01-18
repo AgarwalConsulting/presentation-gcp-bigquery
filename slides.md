@@ -331,6 +331,64 @@ class: center, middle
 ---
 class: center, middle
 
+Jobs are actions that BigQuery runs on your behalf to load data, export data, query data, or copy data.
+
+---
+class: center, middle
+
+When you use the Cloud Console or the `bq` command-line tool to load, export, query, or copy data, a job resource is automatically created, scheduled, and run.
+
+---
+class: center, middle
+
+You can also programmatically create a load, export, query, or copy job.
+
+---
+
+To run a BigQuery job programmatically using the REST API or client libraries, you:
+
+- Call the `jobs.insert` method.
+
+- Periodically request the job resource and examine the status property to learn when the job is complete.
+
+- Check to see whether the job finished successfully.
+
+---
+class: center, middle
+
+### Managing Jobs
+
+.content-credits[https://cloud.google.com/bigquery/docs/managing-jobs#listing_jobs]
+
+---
+
+When a job is submitted, it can be in one of the following states:
+
+- *PENDING*: The job is scheduled and waiting to be run.
+
+- *RUNNING*: The job is in progress.
+
+- *DONE*: The job is completed. If the job completes without errors, then BigQuery reports this state as *SUCCESS*. If the job completes with errors, then BigQuery reports this state as *FAILURE*.
+
+---
+
+#### Listing all jobs
+
+```bash
+bq ls --jobs=true --all=true $PROJECT_ID
+```
+
+---
+
+Other operations
+
+- Job details: `bq show`
+
+- Cancel job: `bq cancel`
+
+---
+class: center, middle
+
 ## Quotas and limits
 
 .content-credits[https://cloud.google.com/bigquery/quotas]
