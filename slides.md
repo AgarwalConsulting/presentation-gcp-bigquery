@@ -720,9 +720,15 @@ Reservations enables you to switch between `on-demand pricing` and `flat-rate pr
 ---
 class: center, middle
 
-## Monitoring
+## Monitoring & Administration
 
 .content-credits[https://github.com/GoogleCloudPlatform/bigquery-utils/tree/master/dashboards/system_tables]
+
+---
+
+- [Monitoring & Logging](https://cloud.google.com/bigquery/docs/monitoring)
+
+- [Administration](https://cloud.google.com/bigquery/docs/admin-intro)
 
 ---
 class: center, middle
