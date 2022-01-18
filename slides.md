@@ -24,9 +24,11 @@ Gaurav Agarwal
 
   - Tables / Views
 
+- Querying
+
 - Running & Managing Jobs
 
-- Workload Management
+- Migrating from data warehouse
 
 - Monitoring & Logging
 
@@ -185,11 +187,6 @@ class: center, middle
 - *Views*: Virtual tables defined by a SQL query
 
 ---
-class: center, middle
-
-*Challenge*: [Loading data into BigQuery](https://github.com/AgarwalConsulting/gcp-training/blob/master/challenges/bigquery/02-loading-data.md)
-
----
 
 ### Table limitations
 
@@ -326,6 +323,299 @@ class: center, middle
 ---
 class: center, middle
 
+## Querying BigQuery
+
+`bq query`
+
+---
+class: center, middle
+
+BigQuery uses temporary tables to cache query results that aren't written to a permanent table.
+
+---
+class: center, middle
+
+After a query finishes, the temporary table exists for up to 24 hours.
+
+---
+class: center, middle
+
+### Specifying a destination table
+
+`--destination_table`
+
+---
+
+To control the write disposition for an existing destination table, specify one of the following optional flags:
+
+- `--append_table`: If the destination table exists, the query results are appended to it.
+
+- `--replace`: If the destination table exists, it is overwritten with the query results.
+
+---
+class: center, middle
+
+### Interactive and Batch query
+
+---
+class: center, middle
+
+BigQuery runs interactive query jobs, which means that the query is executed as soon as possible.
+
+---
+class: center, middle
+
+BigQuery queues each batch query on your behalf, and starts the query as soon as idle resources are available in the BigQuery shared resource pool.
+
+---
+class: center, middle
+
+If BigQuery hasn't started the query within 24 hours, BigQuery changes the job priority to interactive.
+
+---
+
+- Interactive queries count toward your concurrent rate limit and your daily limit.
+
+- Batch queries don't count towards your concurrent rate limit, which can make it easier to start many queries at once.
+
+---
+class: center, middle
+
+`--batch` flag
+
+---
+class: center, middle
+
+### Dry Run
+
+`--dry_run`
+
+.content-credits[https://cloud.google.com/bigquery/docs/dry-run-queries]
+
+---
+class: center, middle
+
+### Parametrized Queries
+
+.content-credits[https://cloud.google.com/bigquery/docs/parameterized-queries]
+
+---
+class: center, middle
+
+BigQuery supports query parameters to help prevent SQL injection when queries are constructed using user input.
+
+---
+class: center, middle
+
+To specify a named parameter, use the `@` character followed by an identifier, such as `@param_name`
+
+---
+
+```sql
+-- #standardSQL
+SELECT
+  word,
+  word_count
+FROM
+  `bigquery-public-data.samples.shakespeare`
+WHERE
+  corpus = @corpus
+  AND word_count >= @min_word_count
+ORDER BY
+  word_count DESC
+```
+
+---
+class: center, middle
+
+Use `--parameter` to provide values for parameters in the form `name:type:value`.
+
+---
+
+- An empty name produces a positional parameter.
+
+- The type may be omitted to assume `STRING`.
+
+---
+
+#### Using arrays in parameterized queries
+
+```bash
+bq query \
+--use_legacy_sql=false \
+--parameter='gender::M' \
+--parameter='states:ARRAY<STRING>:["WA", "WI", "WV", "WY"]' \
+'SELECT
+  name,
+  SUM(number) AS count
+FROM
+  `bigquery-public-data.usa_names.usa_1910_2013`
+WHERE
+  gender = @gender
+  AND state IN UNNEST(@states)
+GROUP BY
+  name
+ORDER BY
+  count DESC
+LIMIT
+  10'
+```
+
+---
+
+#### Using timestamps in parameterized queries
+
+```bash
+bq query \
+--use_legacy_sql=false \
+--parameter='ts_value:TIMESTAMP:2016-12-07 08:00:00' \
+'SELECT
+  TIMESTAMP_ADD(@ts_value, INTERVAL 1 HOUR)'
+```
+
+---
+
+#### Using structs in parameterized queries
+
+```bash
+bq query \
+--use_legacy_sql=false \
+--parameter='struct_value:STRUCT<x INT64, y STRING>:{"x": 1, "y": "foo"}' \
+'SELECT
+  @struct_value AS s'
+```
+
+---
+class: center, middle
+
+### Table sampling
+
+---
+class: center, middle
+
+Table sampling lets you query random subsets of data from large BigQuery tables.
+
+---
+class: center, middle
+
+To use table sampling in a query, include the `TABLESAMPLE` clause
+
+---
+class: center, middle
+
+Parameterized queries are not supported by the Cloud Console.
+
+---
+class: center, middle
+
+### Wildcard table
+
+---
+class: center, middle
+
+Wildcard tables enable you to query multiple tables using concise SQL statements.
+
+---
+class: center, middle
+
+Filtering selected tables using `_TABLE_SUFFIX`
+
+---
+
+```sql
+-- #standardSQL
+SELECT
+  max,
+  ROUND((max-32)*5/9,1) celsius,
+  mo,
+  da,
+  year
+FROM
+  `bigquery-public-data.noaa_gsod.gsod194*`
+WHERE
+  max != 9999.9 # code for missing data
+  AND ( _TABLE_SUFFIX = '0'
+    OR _TABLE_SUFFIX = '4' )
+ORDER BY
+  max DESC
+```
+
+---
+class: center, middle
+
+### Access historical data using time travel
+
+---
+class: center, middle
+
+BigQuery lets you use time travel to access data stored in BigQuery that has been changed or deleted.
+
+---
+
+- You can access the data from any point within the last seven days.
+
+- Time travel lets you query data that was updated or deleted, restore a table that was deleted, or restore a table that expired.
+
+---
+
+```sql
+SELECT *
+FROM `mydataset.mytable`
+  FOR SYSTEM_TIME AS OF TIMESTAMP_SUB(CURRENT_TIMESTAMP(), INTERVAL 1 HOUR);
+```
+
+---
+class: center, middle
+
+If the timestamp specifies a time from more than seven days ago or from before the table was created, then the query fails and returns an error.
+
+---
+
+#### Restore a table
+
+```bash
+bq cp mydataset.table1@-3600000 mydataset.table1_restored
+```
+
+The time, `-3600000`, is specified in milliseconds using a relative offset.
+
+---
+class: center, middle
+
+### Saved queries (only using console!)
+
+---
+class: center, middle
+
+### Scheduling queries
+
+---
+class: center, middle
+
+You can schedule queries to run on a recurring basis.
+
+---
+
+```sql
+SELECT @run_time AS time,
+  title,
+  author,
+  text
+FROM `bigquery-public-data.hacker_news.stories`
+LIMIT
+  1000
+```
+
+---
+class: center, middle
+
+## Working with Standard SQL
+
+.content-credits[https://cloud.google.com/bigquery/docs/reference/standard-sql/arrays]
+
+---
+class: center, middle
+
 ## Running & Managing Jobs
 
 ---
@@ -385,6 +675,54 @@ Other operations
 - Job details: `bq show`
 
 - Cancel job: `bq cancel`
+
+---
+class: center, middle
+
+## Query plan and timeline
+
+---
+class: center, middle
+
+Embedded within query jobs, BigQuery includes diagnostic query plan and timing information.
+
+---
+
+- For long running queries, BigQuery will periodically update these statistics.
+
+- These updates happen independently of the rate at which the job status is polled, but typically will not happen more frequently than every 30 seconds.
+
+- Additionally, query jobs that do not leverage execution resources, such as dry run requests or results that can be served from cached results, will not include the additional diagnostic information, though other statistics may be present.
+
+---
+class: center, middle
+
+*Challenge*: [Loading data into BigQuery](https://github.com/AgarwalConsulting/gcp-training/blob/master/challenges/bigquery/02-loading-data.md)
+
+---
+class: center, middle
+
+## BigQuery Reservations
+
+.content-credits[https://cloud.google.com/bigquery/docs/reservations-intro]
+
+---
+class: center, middle
+
+Reservations enables you to switch between `on-demand pricing` and `flat-rate pricing`.
+
+---
+
+- *On-demand pricing*: You pay for the data scanned by your queries. You have a fixed, per-project query processing capacity, and your cost is based on the number of bytes processed.
+
+- *Flat-rate pricing*: You purchase dedicated query processing capacity.
+
+---
+class: center, middle
+
+## Monitoring
+
+.content-credits[https://github.com/GoogleCloudPlatform/bigquery-utils/tree/master/dashboards/system_tables]
 
 ---
 class: center, middle
