@@ -14,33 +14,552 @@ Gaurav Agarwal
 
 ## Agenda
 
-- Overview
+- BigQuery Concepts
 
-- Interacting with BQ
-
-- Running & Managing Jobs
-
-- Working with datasets
-
-- Overview of BigQuery Data Transfer Service
-
-- BigQuery Tables
+  - Working with datasets
 
   - Schemas
 
+  - Interacting with BQ
+
   - Tables / Views
+
+- Running & Managing Jobs
 
 - Workload Management
 
 - Monitoring & Logging
 
+- Other Features
+
+  - Overview of BigQuery Data Transfer Service
+
 ---
 class: center, middle
 
-## Overview of BigQuery
+## BigQuery Concepts
+
+---
+class: center, middle
+
+### Datasets
+
+---
+class: center, middle
+
+A dataset is contained within a specific project.
+
+---
+class: center, middle
+
+Datasets are top-level containers that are used to organize and control access to your tables and views.
 
 ---
 
+#### Dataset Limitations
+
+- You can set the geographic location at creation time only. After a dataset has been created, the location becomes immutable and can't be changed by using the Cloud Console, using the bq command-line tool, or calling the patch or update API methods.
+
+- All tables that are referenced in a query MUST be stored in datasets in the same location.
+
+- When you copy a table, the datasets that contain the source table and destination table must reside in the same location.
+
+- Dataset names must be unique for each project.
+
+---
+class: center, middle
+
+*BigQuery Organization*
+
+![BigQuery Organization](assets/images/bq-organization.png)
+
+.image-credits[https://cloud.google.com/bigquery/docs/resource-hierarchy]
+
+---
+class: center, middle
+
+### BigQuery Tables
+
+---
+class: center, middle
+
+Every table is defined by a schema that describes the column names, data types, and other information.
+
+---
+class: center, middle
+
+### Defining Schema
+
+---
+
+You can specify the schema of a table
+
+- when it is created, or
+
+you can create a table without a schema and declare the schema
+
+- in the query job or
+
+- load job that first populates it with data
+
+---
+class: center, middle
+
+#### Data Types
+
+.content-credits[https://cloud.google.com/bigquery/docs/reference/standard-sql/data-types]
+
+---
+
+- String
+
+- Bytes
+
+- Integer
+
+- Float
+
+- Numeric
+
+- BigNumeric
+
+- Boolean
+
+- Timestamp
+
+---
+
+- Date
+
+- Time
+
+- DateTime
+
+- Geography
+
+- Record (Nested)
+
+---
+
+##### Mode
+
+- Nullable
+
+- Required
+
+- Repeated
+
+---
+class: center, middle
+
+*Demo*: Creating a table with schema
+
+---
+class: center, middle
+
+#### Schema auto-detection
+
+---
+class: center, middle
+
+Schema auto-detection is available when you load data into BigQuery, and when you query an external data source.
+
+---
+class: center, middle
+
+### Accessing the table from CLI - using `bq`
+
+---
+class: center, middle
+
+*Challenge*: [Exploring BigQuery](https://github.com/AgarwalConsulting/gcp-training/blob/master/challenges/bigquery/01-exploration.md)
+
+---
+
+### Table types
+
+- *Native tables*: tables backed by native BigQuery storage
+
+- *External tables*: tables backed by storage external to BigQuery
+
+- *Views*: Virtual tables defined by a SQL query
+
+---
+class: center, middle
+
+*Challenge*: [Loading data into BigQuery](https://github.com/AgarwalConsulting/gcp-training/blob/master/challenges/bigquery/02-loading-data.md)
+
+---
+
+### Table limitations
+
+- Table names must be unique per dataset.
+
+- The Cloud Console supports copying only one table at a time.
+
+- When you copy tables, the destination dataset must reside in the same location as the table being copied. For example, you cannot copy a table from an EU-based dataset to a US-based dataset.
+
+- When you copy multiple source tables to a destination table by using the bq command-line tool, the API, or the client libraries, all source tables must have identical schemas.
+
+- When you export table data, the only supported destination is Cloud Storage.
+
+- When you use an API call, enumeration performance slows as you approach 50,000 tables in a dataset.
+
+- The Cloud Console can display up to 50,000 tables for each dataset.
+
+---
+class: center, middle
+
+## Partitioning & Clustering
+
+---
+class: center, middle
+
+A partitioned table is a special table that is divided into segments, called partitions, that make it easier to manage and query your data.
+
+---
+
+Partition by
+
+- *Time-unit column*: Tables are partitioned based on a `TIMESTAMP`, `DATE`, or `DATETIME` column in the table.
+
+- *Ingestion time*: Tables are partitioned based on the timestamp when BigQuery ingests the data.
+
+- *Integer range*: Tables are partitioned based on an integer column.
+
+---
+class: center, middle
+
+When you create a clustered table in BigQuery, the table data is automatically organized based on the contents of one or more columns in the table’s schema.
+
+---
+
+- The columns you specify are used to colocate related data.
+
+- When you cluster a table using multiple columns, the order of columns you specify is important.
+
+- The order of the specified columns determines the sort order of the data.
+
+---
+
+Use clustering under the following circumstances:
+
+- You don't need strict cost guarantees before running the query.
+
+- You need more granularity than partitioning alone allows. To get clustering benefits in addition to partitioning benefits, you can use the same column for both partitioning and clustering.
+
+- Your queries commonly use filters or aggregation against multiple particular columns.
+
+- The cardinality of the number of values in a column or group of columns is large.
+
+---
+
+Use partitioning under the following circumstances:
+
+- You want to know query costs before a query runs. Partition pruning is done before the query runs, so you can get the query cost after partitioning pruning through a dry run. Cluster pruning is done when the query runs, so the cost is known only after the query finishes.
+
+- You need partition-level management. For example, you want to set a partition expiration time, load data to a specific partition, or delete partitions.
+
+- You want to specify how the data is partitioned and what data is in each partition. For example, you want to define time granularity or define the ranges used to partition the table for integer range partitioning.
+
+---
+
+Prefer clustering over partitioning under the following circumstances:
+
+- Partitioning results in a small amount of data per partition (approximately less than 1 GB).
+
+- Partitioning results in a large number of partitions beyond the limits on partitioned tables.
+
+- Partitioning results in your mutation operations modifying most partitions in the table frequently (for example, every few minutes).
+
+---
+class: center, middle
+
+## Views
+
+.content-credits[https://cloud.google.com/bigquery/docs/views-intro]
+
+---
+class: center, middle
+
+A view is a virtual table defined by a SQL query. When you create a view, you query it in the same way you query a table.
+
+---
+
+### Create a view
+
+- Using the Cloud Console
+
+- Using the bq command-line tool's bq mk command
+
+- Calling the `tables.insert` API method
+
+- Using the client libraries
+
+- Submitting a `CREATE VIEW` data definition language (DDL) statement
+
+---
+class: center, middle
+
+### Materialized Views
+
+---
+class: center, middle
+
+Materialized views are precomputed views that periodically cache the results of a query for increased performance and efficiency.
+
+---
+
+BigQuery Materialized Views can be beneficial in the following ways:
+
+- Reduction in the execution time and cost for queries with aggregate functions.
+
+- Automatic and transparent BigQuery query optimization.
+
+- Aggregation of real-time data.
+
+---
+class: center, middle
+
+![Comparison](assets/images/comparison-bq-components.png)
+
+---
+class: center, middle
+
+## Running & Managing Jobs
+
+---
+class: center, middle
+
+## Quotas and limits
+
+.content-credits[https://cloud.google.com/bigquery/quotas]
+
+---
+class: center, middle
+
+## Table Access Controls
+
+.content-credits[https://cloud.google.com/bigquery/docs/table-access-controls-intro]
+
+---
+class: center, middle
+
+## Other Features of BigQuery
+
+---
+class: center, middle
+
+BigQuery maximizes flexibility by separating the compute engine that analyzes your data from your storage choices.
+
+---
+class: center, middle
+
+You can store and analyze your data within BigQuery or use BigQuery to assess your data where it lives.
+
+---
+
+- BigQuery
+
+- BigQuery ML
+
+- Geospatial Analysis
+
+- BigQuery Omni
+
+- Data Transfer Service
+
+---
+class: center, middle
+
+### BigQuery ML
+
+---
+class: center, middle
+
+BigQuery ML lets you create and execute machine learning models in BigQuery using standard SQL queries.
+
+---
+
+#### Types of models
+
+- Linear regression for forecasting; for example, the sales of an item on a given day. Labels are real-valued (they cannot be +/- infinity or NaN).
+
+- Binary logistic regression for classification; for example, determining whether a customer will make a purchase. Labels must only have two possible values.
+
+- Multiclass logistic regression for classification. These models can be used to predict multiple possible values such as whether an input is "low-value," "medium-value," or "high-value." Labels can have up to 50 unique values. In BigQuery ML, multiclass logistic regression training uses a multinomial classifier with a cross-entropy loss function.
+
+- K-means clustering for data segmentation; for example, identifying customer segments. K-means is an unsupervised learning technique, so model training does not require labels nor split data for training or evaluation.
+
+- Matrix Factorization for creating product recommendation systems. You can create product recommendations using historical customer behavior, transactions, and product ratings and then use those recommendations for personalized customer experiences.
+
+---
+
+#### Types of models (continued)
+
+- Time series for performing time-series forecasts. You can use this feature to create millions of time series models and use them for forecasting. The model automatically handles anomalies, seasonality, and holidays.
+
+- Boosted Tree for creating XGBoost based classification and regression models.
+
+- Deep Neural Network (DNN) for creating TensorFlow-based Deep Neural Networks for classification and regression models.
+
+- AutoML Tables to create best-in-class models without feature engineering or model selection. AutoML Tables searches through a variety of model architectures to decide the best model.
+
+- TensorFlow model importing. This feature lets you create BigQuery ML models from previously trained TensorFlow models, then perform prediction in BigQuery ML.
+
+- Autoencoder for creating Tensorflow-based BigQuery ML models with the support of sparse data representations. The models can be used in BigQuery ML for tasks such as unsupervised anomaly detection and non-linear dimensionality reduction.
+
+---
+class: center, middle
+
+![ML Selection guide](assets/images/ml-model-cheatsheet.png)
+
+---
+class: center, middle
+
+*Demo*: [Create a binary logistic regression model](https://github.com/AgarwalConsulting/gcp-training/blob/master/examples/bigquery/bq-ml.md)
+
+---
+
+#### Results include
+
+- *precision* — A metric for classification models. Precision identifies the frequency with which a model was correct when predicting the positive class.
+
+- *recall* — A metric for classification models that answers the following question: Out of all the possible positive labels, how many did the model correctly identify?
+
+- *accuracy* — Accuracy is the fraction of predictions that a classification model got right.
+
+- *f1_score* — A measure of the accuracy of the model. The f1 score is the harmonic average of the precision and recall. An f1 score's best value is 1. The worst value is 0.
+
+- *log_loss* — The loss function used in a logistic regression. This is the measure of how far the model's predictions are from the correct labels.
+
+- *roc_auc* — The area under the ROC curve. This is the probability that a classifier is more confident that a randomly chosen positive example is actually positive than that a randomly chosen negative example is positive.
+
+---
+class: center, middle
+
+### Geospatial Analytics
+
+---
+class: center, middle
+
+Geospatial analytics let you analyze and visualize geospatial data in BigQuery by using geography data types and standard SQL geography functions.
+
+---
+
+#### Limitations
+
+- Geography functions are available only in standard SQL.
+
+- Only the BigQuery client library for Python currently supports the `GEOGRAPHY` data type.
+
+- For other client libraries, convert `GEOGRAPHY` values to strings by using the `ST_ASTEXT` or `ST_ASGEOJSON` function.
+
+  - Converting to text using `ST_AsText` stores only one value, and converting to `WKT` means that the data is annotated as a `STRING` type instead of a `GEOGRAPHY` type.
+
+---
+class: center, middle
+
+*Demo*: [Working with Geospatial analytics](https://github.com/AgarwalConsulting/gcp-training/blob/master/examples/bigquery/geo-analytics.md)
+
+---
+class: center, middle
+
+### BigQuery Omni
+
+---
+class: center, middle
+
+BigQuery Omni lets you run BigQuery analytics on data stored in AWS S3 or Azure blob storage.
+
+---
+
+You don't necessarily want to move or copy the data to a central location, due to:
+
+- cost
+
+- time
+
+- data governance
+
+- problems caused by data duplication
+
+---
+class: center, middle
+
+By using BigQuery Omni, you don't have to copy the data into Google Cloud. Instead, BigQuery Omni brings the BigQuery analytics engine to your data where it resides.
+
+---
+class: center, middle
+
+BigQuery Omni extends the architecture by running the BigQuery query engine in other clouds.
+
+---
+class: center, middle
+
+*Omni Architecture*
+
+![Omni Architecture](assets/images/bq-omni-architecture.png)
+
+---
+
+#### Omni limitations
+
+- Only supports external tables
+
+- Max result size of interactive queries is 2 MiB
+
+- Materialized views are not supported
+
+- Scheduled queries are only supported through the API or CLI
+
+.content-credits[https://cloud.google.com/bigquery-omni/docs/introduction#limitations]
+
+---
+class: center, middle
+
+*Data Flow between Google and AWS or Azure*
+
+![Omni Dataflow](assets/images/omni_dataflow_query.png)
+
+.content-credits[https://cloud.google.com/bigquery-omni/docs/dataprocessing]
+
+---
+
+1. BigQuery control plane receive query jobs from the customer via Cloud Console or the BigQuery CLI/API.
+
+2. BigQuery control plane sends query jobs for processing to BigQuery data plane (on AWS/Azure)
+
+3. BigQuery data plane receives query from the control plane through a VPN connection.
+
+4. BigQuery data plane reads table data from customer owned storage buckets (AWS S3 or Azure Blob storage)
+
+5. BigQuery data plane runs the query job on table data. Processing of table data occurs in the select AWS or Azure region
+
+6. Query result (up to 2 MB) is transmitted from data plane to control plane via VPN connection.
+
+7. BigQuery control plane receives query job results for display to customer in response to query job. This data is stored temporarily (up to 24 hrs).
+
+8. Query result is returned to the user.
+
+---
+class: center, middle
+
+### Loading data into BigQuery
+
+---
+
+There are several ways to ingest data into BigQuery:
+
+- Batch load a set of data records
+
+- Stream individual records or batches of records
+
+- Use queries to generate new data and append or overwrite the results to a table
+
+- Use a third-party application or service
+
+---
 class: center, middle
 
 Code
